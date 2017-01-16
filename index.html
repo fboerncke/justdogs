@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+                    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Just Dogs</title>
+<link rel="stylesheet" href="css/jquery.mobile-1.1.1.min.css" />
+<style>
+.loading {
+  background: transparent url(css/images/ajax-loader.gif) center center
+    no-repeat;
+  width: 100%;
+}
+</style>
+<script src="js/jquery.min.js"></script>
+<script>
+  $(document).bind('mobileinit', function() {
+    $.mobile.defaultPageTransition = 'none';
+  });
+</script>
+<script src="js/jquery.mobile-1.1.1.min.js"></script>
+<script>
+  var images;
+  var itemNumber;
+
+  $(document)
+      .ready(
+          function() {
+            // on startup preload 9 images
+            if (typeof Android != 'undefined') {
+              Android.showToast('loading new images ...');
+            }
+            updateImageGrid();
+
+            // bind "more" button to reload
+            $('#more').click(function() {
+              updateImageGrid();
+              // $.mobile.changePage("#page1");
+              return false;
+            });
+
+            // bind "back" button to cleanup old image
+            $('#grid').click(function() {
+              var imgAnchor = document.getElementById("bigImage");
+              imgAnchor.src = "";
+              return true;
+            });
+
+            // bind "more" button to reload
+            $('#about')
+                .click(
+                    function() {
+                      var item = images[itemNumber];
+                      $('#information').empty();
+                      if (item.title) {
+                        $('#information').append($('<p/>', {
+                          'style' : 'text-align:center'
+                        }).append("Image description (given by the author): <em>'" + item.title + "'</em>"));
+                      }
+                      $('#information')
+                          .append(
+                              $('<p/>', {
+                                'style' : 'text-align:center'
+                              })
+                                  .append(
+                                      "You like this picture? You can contact the author and visit more images by visiting the photographer's <a href = 'http://www.flickr.com/people/"+item.owner+"' target = '_blank' style = 'text-decoration: none; color: red;'  >Flickr</a> page."));
+                      return false;
+                    });
+
+          });
+</script>
+<script type="text/javascript">
+  // basic helper methods to shuffle a list
+  (function($) {
+    $.fn.shuffle = function() {
+      return this.each(function() {
+        var items = $(this).children();
+        return (items.length) ? $(this).html($.shuffle(items)) : this;
+      });
+    }
+
+    $.shuffle = function(arr) {
+      for (var j, x, i = arr.length; i; j = parseInt(Math.random() * i), x = arr[--i], arr[i] = arr[j], arr[j] = x)
+        ;
+      return arr;
+    }
+  })(jQuery);
+</script>
+<script type="text/javascript">
+  // change page and show image
+  function showBigImage(imageIndex) {
+    itemNumber = imageIndex;
+    var item = images[itemNumber];
+    var imageSrcBig = "http://farm" + item.farm + ".static.flickr.com/" + item.server + "/" + item.id + "_" + item.secret + "_b.jpg";
+    var imgAnchor = document.getElementById("bigImage");
+    imgAnchor.src = imageSrcBig;
+    $('#information').empty(); // clear image annotation
+    return true;
+  }
+
+  function updateImageGrid() {
+    //$('#imageGrid').text('Looking for more images ...');
+    var success = false;
+    $
+        .getJSON(
+            "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=2882c194ec256ad6d3159d35b4f8e764&tags=hund,welpe&safe_search=1&tag_mode=all&content_type=1&per_page=100&format=json&jsoncallback=?",
+            {}, function(data) {
+
+              success = true; // we found something
+              $('#imageGrid').empty(); // initialize grid
+
+              images = $.shuffle(data.photos.photo);
+              var item;
+              var src;
+              var src_big;
+
+              for (i = 0; i < 3; i++) {
+                var offset = 3 * i;
+
+                item = images[offset + 0];
+                src = "http://farm" + item.farm + ".static.flickr.com/" + item.server + "/" + item.id + "_"
+                    + item.secret + "_q.jpg";
+                $('#imageGrid').append($('<div/>', {
+                  'class' : 'ui-block-a',
+                  'style' : 'align:center'
+                }).append($('<a>', {
+                  'href' : '#page2',
+                  'onClick' : 'showBigImage(' + (offset + 0) + ');'
+                }).append($('<img/>', {
+                  'src' : src,
+                  'class' : 'loading'
+                }))));
+
+                item = images[offset + 1];
+                src = "http://farm" + item.farm + ".static.flickr.com/" + item.server + "/" + item.id + "_"
+                    + item.secret + "_q.jpg";
+                $('#imageGrid').append($('<div/>', {
+                  'class' : 'ui-block-b',
+                  'style' : 'align:center'
+                }).append($('<a>', {
+                  'href' : '#page2',
+                  'onClick' : 'showBigImage(' + (offset + 1) + ');'
+                }).append($('<img/>', {
+                  'src' : src,
+                  'class' : 'loading'
+                }))));
+
+                item = images[offset + 2];
+                src = "http://farm" + item.farm + ".static.flickr.com/" + item.server + "/" + item.id + "_"
+                    + item.secret + "_q.jpg";
+                $('#imageGrid').append($('<div/>', {
+                  'class' : 'ui-block-c',
+                  'style' : 'align:center'
+                }).append($('<a>', {
+                  'href' : '#page2',
+                  'onClick' : 'showBigImage(' + (offset + 2) + ');'
+                }).append($('<img/>', {
+                  'src' : src,
+                  'class' : 'loading'
+                }))));
+              }
+            });
+    // after 3 seconds of inactivity show error message 
+    setTimeout(function() {
+      if (success == false) {
+        $('#imageGrid').text('This application requires an active internet connection to work properly.');
+      }
+    }, 3000);
+  }
+</script>
+<script type="text/javascript">
+<!--
+  google_ad_client = "ca-pub-6454844142489012";
+  /* Just Dogs */
+  google_ad_slot = "0650664226";
+  google_ad_width = 320;
+  google_ad_height = 50;
+//-->
+</script>
+<!-- 
+http://www.flickr.com/services/api/flickr.photos.search.html
+http://www.flickr.com/services/api/misc.urls.html
+ -->
+</head>
+<body>
+
+    <!-- page 1 -->
+
+    <div data-role="page" data-theme="a" data-content-theme="a" id="page1">
+        <div data-theme="a" data-role="header">
+            <h1>Just Dogs</h1>
+            <a href="#page1" id="more" data-ajax="true" data-icon="refresh">More Dogs</a>
+        </div>
+        <div data-role="content">
+
+            <div id="images"></div>
+
+            <div class="ui-grid-b" id="imageGrid"></div>
+
+        </div>
+        <div data-theme="a" data-role="footer" data-position="fixed">
+            <div id="info" style="text-align: center;">
+                <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+            </div>
+        </div>
+    </div>
+
+    <!-- page 2 -->
+
+    <div data-role="page" data-theme="a" data-content-theme="a" id="page2">
+        <div data-theme="a" data-role="header" data-position="fixed" data-fullscreen="true">
+            <h1>Just Dogs</h1>
+            <a href="#page1" id="grid" data-ajax="true" data-icon="grid" rel="external">Back</a>
+            <a href="#page2" id="about" data-ajax="true" data-icon="info" rel="external">About</a>
+        </div>
+        <div data-role="content">
+            <div id="bigImageDiv" class="loading">
+                <img id="bigImage" style="width: 100%;" />
+            </div>
+            <div id="information"></div>
+        </div>
+    </div>
+</body>
+</html>
